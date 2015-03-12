@@ -17,13 +17,38 @@ my $primarytranscripts = $outputdir . "/" . "$fastafilename" .  "_primarytranscr
 
 
 &parsefastafilePoplar ($filefullpath, $allidsfile);
-&parsePrimaryPoplarTranscripts ($allidsfile, $primarytranscripts);
+#&parsePrimaryPoplarTranscripts ($allidsfile, $primarytranscripts);
 print "Completed steps\n";
 
 
+sub countpolyaasimple {
+
+	my ($aa, $size, $file) = @_;
+	my $pattern = $aa x $size;
+	open (FILE, $file) or die ("died:Could not open file $file");
+	while (<FILE>){
 
 
 
+	}
+
+}
+
+
+
+sub getlengths {
+	my ($seq1) = @_;
+	my $lengthsize = "";
+	while ($seq1 =~/QQQQ*/g) {
+#print "Found '$&'.  Next attempt at character " . pos($string)+1 . "\n";
+		my $ps = pos($seq1)+1;
+		my $q = length ($&);
+		$lengthsize .= "$q ";
+#print "Found '$&' of size $q at " . $ps . "\n";
+	}
+
+	return $lengthsize;
+}
 
 
 
@@ -55,13 +80,26 @@ sub parsefastafilePoplar {
 	close (FILE);
 # Write results in two column id\tsequence
 	open (FILEOUT, ">$outputfile") or die ("died:can not open file $outputfile for writing");
+	print FILEOUT "id\tsequence\tlengths\ttype\tmax\tcount\n";
 	while (my ($id, $sequence) = each (%hash)){
-		print FILEOUT "$id\t$sequence\n"; 
+		my $lengths=getlengths($sequence);
+		my @lengths = split (" ", $lengths);
+		my @slengths = sort{$b<=>$a} @lengths;
+		my $count = @slengths;
+		$count = 0 if (!$count);
+		my $max = $slengths[0];
+		$max = "NA" if (!$max);
+		$lengths="NA" if (!$lengths);
+		my $type="s";
+		if ($id =~/\.1$/){
+			$type="p";
+		}
+		print FILEOUT "$id\t$sequence\t$lengths\t$type\t$max\t$count\n"; 
 	}
 	close (FILEOUT);
 
 #Simple tests to see if the parsing went well 
-	&testfastaparse ($inputfile, $outputfile);
+#&testfastaparse ($inputfile, $outputfile);
 
 }
 
@@ -120,18 +158,5 @@ sub parsePrimaryPoplarTranscripts {
 
 
 
-
-sub countpolyq {
-
-	my ($aa, $size, $file) = @_;
-	my $pattern = $aa x $size;
-	open (FILE, $file) or die ("died:Could not open file $file");
-	while (<FILE>){
-
-
-
-	}
-
-}
 
 
